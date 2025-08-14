@@ -1,22 +1,22 @@
 # Asynchronous JavaScript
 
-<details>
+<details open>
 <summary>Table of content</summary>
 
 - [What is asynchronous JavaScript?](#what-is-asynchronous-javascript)
-  - [XMLHttpRequest - Callback-based](#xmlhttprequest---callback-based)
+- [XMLHttpRequest - Callback-based](#xmlhttprequest---callback-based)
   - [Example with XMLHttpRequest](#example-with-xmlhttprequest)
   - [The XMLHttpRequest Object](#the-xmlhttprequest-object)
     - [Properties](#properties)
     - [Methods](#methods)
     - [Events](#events)
-  - [Promises](#promises)
+- [Promises](#promises)
   - [Creating a promise](#creating-a-promise)
   - [Using the results of a Promise](#using-the-results-of-a-promise)
-  - [Fetch API - Promise-based](#fetch-api---promise-based)
-    - [Breakdown of fetch](#breakdown-of-fetch)
-    - [Syntax of fetch](#syntax-of-fetch)
-    - [Common options](#common-options)
+- [Fetch API - Promise-based](#fetch-api---promise-based)
+  - [Breakdown of fetch](#breakdown-of-fetch)
+  - [Syntax of fetch](#syntax-of-fetch)
+  - [Common options](#common-options)
 - [API - Application Programming Interface](#api---application-programming-interface)
   - [Endpoints](#endpoints)
   - [Request and Response](#request-and-response)
@@ -27,17 +27,21 @@
 
 ## What is asynchronous JavaScript?
 
-JavaScript is inherently single-threaded, meaning it executes one operation at a time. However, many operations, such as fetching data from a server or reading a file, are time-consuming and can lead to blocking code execution.
+JavaScript is inherently single-threaded, meaning it can only run one piece of code at a time. Some operations — like fetching data from a server or reading a file — can take a long time. If these were run synchronously, they would block everything else from running.
 
-Asynchronous programming allows you to execute code out of order, making it possible to perform time-consuming operations without blocking the execution of the rest of your code.
+Asynchronous programming allows these long-running operations to be handed off to the browser’s internal systems — for example, the **networking layer** for HTTP requests — so the JavaScript engine can keep executing other code without being blocked. While these operations are in progress, the browser manages them separately, and the results are delivered back to JavaScript later through callbacks, promises, or `async/await`.
+
+Modern browsers are full runtime environments that do far more than just run JavaScript. They handle rendering, networking, event handling, security, and many other subsystems. You can read more about this in [MDN’s article on browser architecture](https://developer.mozilla.org/en-US/docs/Web/Performance/How_browsers_work).
 
 [Back to top](#asynchronous-javascript)
 
-### XMLHttpRequest - Callback-based
+## XMLHttpRequest - Callback-based
 
 `XMLHttpRequest` is a built-in object on JavaScript that provides an easy way to make HTTP requests from the browser. It supports both synchronous and asynchronous requests, but asynchronous usage is more common and recommended to avoid blocking the main thread. It has been available for a long time and was the standard way to perform HTTP requests before the introduction of the `Fetch` API.
 
 While `XMLHttpRequest` is still functional and supported in most browsers, the `Fetch` API is considered more modern, provides a simpler and more flexible interface, and is based on Promises. The `Fetch` API is generally recommended for new projects, but `XMLHttpRequest` may still be encountered in older codebases.
+
+[Link to Documentation on XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)
 
 [Back to top](#asynchronous-javascript)
 
@@ -45,9 +49,9 @@ While `XMLHttpRequest` is still functional and supported in most browsers, the `
 
 ```js
 const xhr = new XMLHttpRequest();
-xhr.open("GET", "./cars.json", true);
+xhr.open('GET', './cars.json', true);
 
-xhr.addEventListener("readystatechange", () => {
+xhr.addEventListener('readystatechange', () => {
   // The request is complete and the response is available
   if (xhr.readyState === 4) {
     // Succesful request
@@ -55,7 +59,7 @@ xhr.addEventListener("readystatechange", () => {
       console.log(xhr.responseText);
     } else {
       // Request failed
-      console.error("Error:", xhr.status);
+      console.error('Error:', xhr.status);
     }
   }
 });
@@ -69,19 +73,24 @@ xhr.send();
 
 Down below is a list of the different properties, methods and event related to the `XMLHttpRequest`.
 
-#### Properties
+### Properties
 
 - **readyState**
 
 Represents the state of the request. It can have values from 0 to 4, indicating different states of the request lifecycle.
+Here’s your list with the small tweak applied so it’s fully accurate:
 
-    - 0: UNSENT - Request not initialized
-    - 1: OPENED - Connection established
-    - 2: HEADERS_RECEIVED - Headers received
-    - 3: LOADING - Downloading response text
-    - 4: DONE - Request completed
+- **0: UNSENT** – Request not initialized (`open()` has not been called).
 
-- **responseText**
+- **1: OPENED** – Request has been configured with `open()`; connection not necessarily established yet.
+
+- **2: HEADERS_RECEIVED** – `send()` has been called and the HTTP headers + status are available.
+
+- **3: LOADING** – Response body is being received; partial `responseText` may be available.
+
+- **4: DONE** – Request completed (either successfully or with an error).
+
+* **responseText**
 
 Returns the response as a string. This is the data that has been fetched. In order to convert this string to the underlying data structure _(object, array or whatever it is)_ you need to use the `JSON.parse` method.
 
@@ -95,7 +104,7 @@ Returns the HTTP status text of the response _(e.g., "OK" for a successful reque
 
 [Back to top](#asynchronous-javascript)
 
-#### Methods
+### Methods
 
 - **open( _method, url, async, user, password_ )**
 
@@ -119,15 +128,27 @@ Sends the request.
 
 Sets a request header. This method must be called after open() and before send().
 
-#### Events
+### Events
 
-- **readystatechange**
+- **readystatechange** – fires on every state change (readyState 0→4).
 
-An event that fires whenever the `readyState` property changes. When the `readyState` changes to the value "4", that means that the request is complete.
+- **load** – fires when the request finishes successfully (after state 4 with a 2xx status).
+
+- **error** – fires if the request fails due to a network error.
+
+- **abort** – fires if you call xhr.abort().
+
+- **timeout** – fires if the request times out (xhr.timeout set, and exceeded).
+
+- **loadstart** – fires when the request starts.
+
+- **loadend** – fires when the request finishes, regardless of success or error.
+
+progress – fires during the download phase with progress info (only works if server sends Content-Length).
 
 [Back to top](#asynchronous-javascript)
 
-### Promises
+## Promises
 
 A Promise is an object that represents the eventual completion or failure of an asynchronous operation. It is a way to handle asynchronous code in a more organized and readable manner. A Promise can be in one of three states:
 
@@ -150,7 +171,7 @@ The state when the asynchronous operation encounters an error or fails, and the 
 You can create a Promise using the Promise constructor, which takes a function as its argument. This function, often called the "executor," takes two argument: resolve and reject. These are functions provided by the Promise implementation.
 
 ```js
-import cars from "./cars.js";
+import cars from './cars.js';
 
 const customPromise = new Promise((resolve, reject) => {
   setTimeout(() => {
@@ -158,7 +179,7 @@ const customPromise = new Promise((resolve, reject) => {
 
     resolve(data);
 
-    reject(new Error("Something went wrong"));
+    reject(new Error('Something went wrong'));
   }, 2000);
 });
 ```
@@ -172,12 +193,12 @@ Once you have a Promise, you can use the `.then()` and .`catch()` methods to han
 ```js
 customPromise
   .then((data) => {
-    console.log("Success:", data);
+    console.log('Success:', data);
   })
   .then(() => {})
   .then(() => {})
   .catch((error) => {
-    console.error("Error:", error);
+    console.error('Error:', error);
   });
 ```
 
@@ -187,11 +208,11 @@ Promises are a fundamental part of modern JavaScript, and they provide a more st
 
 [Back to top](#asynchronous-javascript)
 
-### Fetch API - Promise-based
+## Fetch API - Promise-based
 
 `fetch` is a modern web API in JavaScript designed for making network requests (HTTP requests) from a web browser. It provides a cleaner and more powerful alternative to the older XMLHttpRequest for handling asynchronous operations.
 
-#### Breakdown of fetch
+### Breakdown of fetch
 
 - **Returns a promise**: it returns a `Promise` and this promise resolves to a `Response` object representing the completion or failure of the request.
 
@@ -213,7 +234,7 @@ In summary, fetch is a versatile and efficient API for making HTTP requests in J
 
 [Back to top](#asynchronous-javascript)
 
-#### Syntax of fetch
+### Syntax of fetch
 
 ```js
 fetch( url, options?)
@@ -240,7 +261,7 @@ The `fetch` returns a Promise that resolves to the `Response` to taht request, w
 
 [Back to top](#asynchronous-javascript)
 
-#### Common options
+### Common options
 
 - **method**: the HTTP method for the request _( "GET", "POST", "PUT", "DELETE" )_. `GET` is the default value on this property.
 
@@ -250,18 +271,18 @@ The `fetch` returns a Promise that resolves to the `Response` to taht request, w
   - `DELETE` is used to remove resources
 
 ```js
-fetch("https://api.example.com/data", {
-  method: "POST",
+fetch('https://api.example.com/data', {
+  method: 'POST',
 });
 ```
 
 - **headers**: an object containing any headers you want to include in your request. The most common header is the `Content/Type` which specifies the media type of the resource. For example, when sending JSON data in a `POST` request, you would set this property to `application/json`.
 
 ```js
-fetch("https://api.example.com/data", {
-  method: "POST",
+fetch('https://api.example.com/data', {
+  method: 'POST',
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 ```
@@ -270,7 +291,7 @@ fetch("https://api.example.com/data", {
 
 [Back to top](#asynchronous-javascript)
 
-#### Response Object
+### Response Object
 
 The `Response` object represents the response to a request. It has various properties and methods, here is a few of them.
 
