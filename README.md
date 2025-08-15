@@ -49,7 +49,7 @@ While `XMLHttpRequest` is still functional and supported in most browsers, the `
 
 ```js
 const xhr = new XMLHttpRequest();
-xhr.open('GET', './cars.json', true);
+xhr.open('GET', 'https://jsonplaceholder.typicode.com/todos', true);
 
 xhr.addEventListener('readystatechange', () => {
   // The request is complete and the response is available
